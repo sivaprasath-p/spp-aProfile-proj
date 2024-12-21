@@ -4,8 +4,14 @@ name: myFirstWorkflow
 on: workflow_dispatch
 
 jobs:
-  codeTesting:
+  aProfileBuild:
     runs-on: ubuntu-latest
     steps:
-      - name: workflowTesting
-        run: echo "Testing Workflow"
+      - name: cloneRepository
+        uses: actions/checkout@v4
+
+      - name: mavenTest
+        run: mvn test
+
+      - name: checkStyleAnalysis
+        run: mvn checkstyle:checkstyle
