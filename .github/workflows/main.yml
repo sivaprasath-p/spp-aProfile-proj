@@ -26,9 +26,9 @@ jobs:
           java-version: '11'
     # Checking target directory
       - name: Checking tree command
-        run: apt install -y tree
-      - name: Listing directories
-        run: tree ./
+        run: |
+          sudo apt install -y tree
+          tree ./
     # Setup sonar scanner
       - name: sonar-scanner
         uses: warchant/setup-sonar-scanner@v8 # https://github.com/marketplace/actions/sonar-scanner
