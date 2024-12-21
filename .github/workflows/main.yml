@@ -7,11 +7,33 @@ jobs:
   aProfileBuild:
     runs-on: ubuntu-latest
     steps:
-      - name: cloneRepository
+    # Let's clone repo and checkout to it
+      - name: Clone/Checkout Repository
         uses: actions/checkout@v4
-
-      - name: mavenTest
+        with:
+          fetch-depth: 0
+    # Let's test the code using maven
+      - name: Maven Test
         run: mvn test
-
-      - name: checkStyleAnalysis
+    # maven checkstyle analysis
+      - name: Maven Checkstyle Analysis
         run: mvn checkstyle:checkstyle
+    # Setup java version for this project 
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3 # https://github.com/marketplace/actions/setup-java-jdk
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+    # Setup sonar scanner
+      - name: sonar-scanner
+        uses: warchant/setup-sonar-scanner@v8 # https://github.com/marketplace/actions/sonar-scanner
+    # Run sonar scanner
+      - name: SonarQube Scan
+        run: sona-scanner
+             -Dsonar.host.url=${{ secrets.SONAR_URL }}
+             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+             -Dsonar.organization=${{ secrets.SONAR_ORG }}
+             -Dsonar.projectKey=${{ secrets.SONAR_PROJ_KEY }}
+             -Dsonar.sources=src/
+
+
