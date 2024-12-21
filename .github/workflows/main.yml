@@ -24,6 +24,9 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
+    # Checking target directory
+      - name: Listing the directories
+        run: ls -latr
     # Setup sonar scanner
       - name: sonar-scanner
         uses: warchant/setup-sonar-scanner@v8 # https://github.com/marketplace/actions/sonar-scanner
