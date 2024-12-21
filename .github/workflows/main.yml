@@ -31,9 +31,11 @@ jobs:
       - name: SonarQube Scan
         run: sonar-scanner
              -Dsonar.host.url=${{ secrets.SONAR_URL }}
-             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
              -Dsonar.organization=${{ secrets.SONAR_ORG }}
              -Dsonar.projectKey=${{ secrets.SONAR_PROJ_KEY }}
-             -Dsonar.sources=src/
+             -Dsonar.sources=src/main/
+             -Dsonar.language=java
+             -Dsonar.java.binaries=**/target/classes
 
 
