@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spp-mysql
+  owner: spp
+  creationTimestamp: null
+  labels:
+    app: spp-mysql
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spp-mysql
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: spp-mysql
+    spec:
+      containers:
+        - name: spp-mysql-con
+          image: mysql:latest
+          imagePullPolicy: Always
+          ports:
+            - name: spp-mysqldb-port
+              containerPort: 3306
+          resources:
+            requests:
+              cpu: 1
+              memory: "1Gi"
+            limits:
+              cpu: 2
+              memory: "2Gi"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spp-secret
+                  key: mysqldb-pass
+          volumeMounts:
+            - name: spp-mysqldb-data
+              mountPath: /var/lib/mysql
+      initContainers:
+        - name: spp-mysql-sidecar
+          image: busybox:latest
+          args: ["rm", "-rf", "/var/lib/mysql/lost+found"]
+          volumeMounts:
+            - name: spp-db-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: spp-mysqldb-data
+          persistentVolumeClaim:
+            claimName: spp-mysql-pvc
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spp-mysql-pvc
+  owner: spp
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 3Gi
+  storageClassName: spp-ebs-sc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: spp-mysqldb-svc
+spec:
+  type: ClusterIp
+  selector:
+    app: spp-mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: spp-mysqldb-port

@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spp-webapp-deploy
+  owner: spp
+  creationTimestamp: null
+  labels:
+    app: webapp-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spp-webapp
+  strategy:
+   type: RollingUpdate
+   rollingUpdate:
+     maxUnavailable: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: spp-webapp
+    spec:
+      containers:
+        - name: spp-webapp-con
+          image: vprocontainers/vprofileapp
+          imagePullPolicy: Always
+          ports:
+            - name: spp-webapp-port
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 1
+              memory: "1Gi"
+            limits:
+              cpu: 2
+              memory: "2Gi"
+          volumeMounts:
+            - name: spp-webapp-data
+              mountPath: /usr/share/tomcat6/
+      initContainers:
+        - name: spp-webapp-sidecar1
+          image: busybox:latest
+          command: ['sh', '-c', 'until nslookup spp-mysqldb-svc.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done;']
+        - name: spp-webapp-sidecar1
+          image: busybox:latest
+          command: ['sh', '-c', 'until nslookup spp-rmqdb-svc.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done;']
+        - name: spp-webapp-sidecar1
+          image: busybox:latest
+          command: ['sh', '-c', 'until nslookup spp-mcdb-svc.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done;']
+      volumes:
+        - name: spp-webapp-data
+          persistentVolumeClaim: 
+            claimName: spp-webapp-pvc
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spp-webapp-pvc
+  owner: spp
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: spp-ebs-sc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: spp-webapp-svc
+spec:
+  type: ClusterIp
+  selector:
+    app: spp-webapp
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: spp-webapp-port

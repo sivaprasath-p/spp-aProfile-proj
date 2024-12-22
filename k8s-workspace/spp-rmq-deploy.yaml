@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spp-rmqdb-deploy
+  owner: spp
+  creationTimestamp: null
+  labels:
+    app: spp-rmqdb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spp-rmqdb
+  strategy:
+   type: RollingUpdate
+   rollingUpdate:
+     maxUnavailable: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: spp-rmqdb
+    spec:
+      containers:
+        - name: spp-rmqdb-con
+          image: rabbitmq
+          imagePullPolicy: Always   
+          ports:
+            - name: spp-rmqdb-port
+              containerPort: 5672
+          resources:
+            requests:
+              cpu: 1
+              memory: "500Mi"
+            limits:
+              cpu: 1
+              memory: "1Gi"
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: spp-secret
+                  key: rmqdb-user
+            - name: RABBITMQ_DEFAULT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spp-secret
+                  key: rmqdb-pass
+      volumes:
+        - name: spp-rmqdb-data
+          persistentVolumeClaim:
+            claimName: spp-rmqdb-pvc
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spp-rmqdb-pvc
+  owner: spp
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: default
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: spp-rmqdb-svc
+spec:
+  type: ClusterIp
+  selector:
+    app: spp-rmqdb
+  ports:
+    - protocol: TCP
+      port: 5672
+      targetPort: spp-rmqdb-port

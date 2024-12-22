@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spp-mcdb-deploy
+  owner: spp
+  creationTimestamp: null
+  labels:
+    app: spp-mcdb
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spp-mcdb
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: spp-mc
+    spec:
+      containers:
+        - name: spp-mc
+          image: memcached
+          imagePullPolicy: Always
+          ports:
+            - name: spp-mcdb-port
+              containerPort: 11211
+          resources:
+            requests:
+              cpu: 1
+              memory: "500Mi"
+            limits:
+              cpu: 1
+              memory: "1Gi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: spp-mcdb-svc
+spec:
+  type: ClusterIp
+  selector:
+    app: spp-mcdb
+  ports:
+    - protocol: TCP
+      port: 11211
+      targetPort: spp-mcdb-port
