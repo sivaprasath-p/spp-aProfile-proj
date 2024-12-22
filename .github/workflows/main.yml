@@ -41,7 +41,7 @@ jobs:
              -Dsonar.projectKey=${{ secrets.SONAR_PROJ_KEY }}
              -Dsonar.sources=src/main/java
              -Dsonar.language=java
-             -Dsonar.java.binaries=/target/classes
+             -Dsonar.java.binaries=./target/classes
     # Check the Quality Gate status.
       - name: SonarQube Server Quality Gate check
         id: sonarqube-quality-gate-check
