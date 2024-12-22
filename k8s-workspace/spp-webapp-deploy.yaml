@@ -1,3 +1,4 @@
+# Let's create pod deployment definition file for spp-webapp
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,11 +7,13 @@ metadata:
   creationTimestamp: null
   labels:
     app: webapp-deploy
+
+# Let's define specifications deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: spp-webapp
+      app: spp-webapp # Filtering with labels defined in Pod's template below
   strategy:
    type: RollingUpdate
    rollingUpdate:
@@ -38,28 +41,36 @@ spec:
           volumeMounts:
             - name: spp-webapp-data
               mountPath: /usr/share/tomcat6/
+
+      # Ensuring mysqldb,rabbitmq,memcache up and running before bringing spp-webapp pods
       initContainers:
         - name: spp-webapp-sidecar1
           image: busybox:latest
           command: ['sh', '-c', 'until nslookup spp-mysqldb-svc.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done;']
+          
         - name: spp-webapp-sidecar1
           image: busybox:latest
           command: ['sh', '-c', 'until nslookup spp-rmqdb-svc.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done;']
+        
         - name: spp-webapp-sidecar1
           image: busybox:latest
           command: ['sh', '-c', 'until nslookup spp-mcdb-svc.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done;']
+      
+      # Claiming pvc volume for spp-webapp pods
       volumes:
         - name: spp-webapp-data
           persistentVolumeClaim: 
-            claimName: spp-webapp-pvc
-
+            claimName: spp-webapp-pvc # This is a label from spp-webapp-pvc manifest file
 ---
 
+# Let's define PersistentVolumClaim for spp-webapp pod
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: spp-webapp-pvc
   owner: spp
+
+# Let's define specifications for pvc
 spec:
   accessModes:
     - ReadWriteMany
@@ -67,19 +78,22 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: spp-ebs-sc
+  storageClassName: spp-ebs-sc # This a label from StorageClass manifestfile
 
 ---
 
+# Let's ClusterIp Service component for spp-webapp pod
 apiVersion: v1
 kind: Service
 metadata:
   name: spp-webapp-svc
+
+# Let's define specifications for svc
 spec:
   type: ClusterIp
   selector:
-    app: spp-webapp
+    app: spp-webapp # spp-webapp pods will be accessible through this service name on port:8080
   ports:
     - protocol: TCP
       port: 8080
-      targetPort: spp-webapp-port
+      targetPort: spp-webapp-port # Port defined in template in pod deployment file

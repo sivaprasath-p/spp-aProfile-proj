@@ -6,6 +6,8 @@ metadata:
   creationTimestamp: null
   labels:
     app: spp-mysql
+
+# Let's define specifications deployment
 spec:
   replicas: 2
   selector:
@@ -63,6 +65,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: spp-mysql-pvc
   owner: spp
+
+# Let's define specifications for pvc
 spec:
   accessModes:
     - ReadWriteMany
@@ -74,6 +78,7 @@ spec:
 
 ---
 
+# Let's define specifications for svc
 apiVersion: v1
 kind: Service
 metadata:
