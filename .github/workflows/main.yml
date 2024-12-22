@@ -27,7 +27,7 @@ jobs:
     # Checking target directory
       - name: Checking tree command
         run: |
-          sudo apt install -y tree
+          pwd
           tree ./
     # Setup sonar scanner
       - name: sonar-scanner
